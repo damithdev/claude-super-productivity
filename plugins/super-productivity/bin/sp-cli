@@ -8,9 +8,30 @@ case "$(uname -s)-$(uname -m)" in
   *) echo "sp-cli: unsupported platform $(uname -s)-$(uname -m)" >&2; exit 1 ;;
 esac
 
-bin="$(dirname "$0")/../dist/sp-cli-$target"
+root="$(cd "$(dirname "$0")/.." && pwd)"
+bin="$root/dist/sp-cli-$target"
 if [ ! -f "$bin" ]; then
-  echo "sp-cli: binary for target '$target' not found at $bin" >&2
-  exit 1
+  # A copy without binaries (a text-only marketplace) fetches this version's release binary once,
+  # checked against dist/SHA256SUMS.
+  sums="$root/dist/SHA256SUMS"
+  [ -f "$sums" ] || { echo "sp-cli: no binary at $bin and no $sums" >&2; exit 1; }
+  version="$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' "$root/.claude-plugin/plugin.json")"
+  cache="${SP_STATE_DIR:-$HOME/.claude/state}/sp-cli/bin/$version"
+  bin="$cache/sp-cli-$target"
+  if [ ! -f "$bin" ]; then
+    mkdir -p "$cache"
+    url="${SP_CLI_DOWNLOAD_BASE:-https://github.com/damithdev/claude-super-productivity/releases/download}/v$version/sp-cli-$target"
+    part="$bin.part.$$"
+    curl -fsSL "$url" -o "$part" || { rm -f "$part"; echo "sp-cli: download failed: $url" >&2; exit 1; }
+    want="$(grep " \*\{0,1\}sp-cli-$target\$" "$sums" | cut -d' ' -f1)"
+    got="$( (sha256sum "$part" 2>/dev/null || shasum -a 256 "$part") | cut -d' ' -f1)"
+    if [ -z "$want" ] || [ "$want" != "$got" ]; then
+      rm -f "$part"
+      echo "sp-cli: checksum mismatch for $url" >&2
+      exit 1
+    fi
+    chmod +x "$part"
+    mv -f "$part" "$bin"
+  fi
 fi
 exec "$bin" "$@"

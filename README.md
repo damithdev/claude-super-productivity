@@ -98,7 +98,9 @@ cargo test
 cargo build --release
 ```
 
-A version tag (`v*`) runs the release workflow. It builds the three binaries, commits them to `plugins/super-productivity/dist/`, and sets the plugin version.
+A version tag (`v*`) runs the release workflow. It builds the three binaries, commits them to `plugins/super-productivity/dist/` with a `SHA256SUMS` file, sets the plugin version, and publishes a GitHub Release with the same files.
+
+A copy of the plugin without the binaries (for a marketplace that holds text only) keeps `dist/SHA256SUMS`. On first use, `bin/sp-cli` downloads its version's binary from the GitHub Release. It checks the file against `SHA256SUMS` and caches it under `~/.claude/state/sp-cli/bin/`.
 
 ## License
 
