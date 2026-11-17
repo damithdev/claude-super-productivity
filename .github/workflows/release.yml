@@ -1,0 +1,83 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            rust_target: x86_64-pc-windows-msvc
+            target: windows-x64
+            ext: .exe
+          - os: macos-latest
+            rust_target: aarch64-apple-darwin
+            target: macos-arm64
+            ext: ""
+          - os: macos-latest
+            rust_target: x86_64-apple-darwin
+            target: macos-x64
+            ext: ""
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_target }}
+      - name: Test
+        if: matrix.target != 'macos-x64'
+        working-directory: crate
+        run: cargo test
+      - name: Build
+        working-directory: crate
+        run: cargo build --release --target ${{ matrix.rust_target }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sp-cli-${{ matrix.target }}
+          path: crate/target/${{ matrix.rust_target }}/release/sp-cli${{ matrix.ext }}
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Tag must be on main
+        run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "tag $GITHUB_REF_NAME is not on main"; exit 1; }
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Place binaries and set version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -eu
+          d=plugins/super-productivity/dist
+          mkdir -p "$d"
+          cp artifacts/sp-cli-windows-x64/sp-cli.exe "$d/sp-cli-windows-x64.exe"
+          cp artifacts/sp-cli-macos-arm64/sp-cli "$d/sp-cli-macos-arm64"
+          cp artifacts/sp-cli-macos-x64/sp-cli "$d/sp-cli-macos-x64"
+          chmod +x "$d/sp-cli-macos-arm64" "$d/sp-cli-macos-x64" plugins/super-productivity/bin/sp-cli
+          f=plugins/super-productivity/.claude-plugin/plugin.json
+          v="${TAG#v}"
+          sed -i -E "s/(\"version\": *\")[^\"]*(\")/\1${v}\2/" "$f"
+      - name: Commit and push
+        run: |
+          set -eu
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f plugins/super-productivity/dist plugins/super-productivity/.claude-plugin/plugin.json
+          git update-index --chmod=+x plugins/super-productivity/bin/sp-cli
+          git commit -m "Release ${{ github.ref_name }}"
+          git pull --rebase origin main
+          git push origin HEAD:main
