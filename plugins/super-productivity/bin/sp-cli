@@ -12,10 +12,10 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 bin="$root/dist/sp-cli-$target"
 if [ ! -f "$bin" ]; then
   # A copy without binaries (a text-only marketplace) fetches this version's release binary once,
-  # checked against dist/SHA256SUMS.
+  # checked against dist/SHA256SUMS. dist/VERSION names the release.
   sums="$root/dist/SHA256SUMS"
-  [ -f "$sums" ] || { echo "sp-cli: no binary at $bin and no $sums" >&2; exit 1; }
-  version="$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' "$root/.claude-plugin/plugin.json")"
+  [ -f "$sums" ] && [ -f "$root/dist/VERSION" ] || { echo "sp-cli: no binary at $bin and no $sums or dist/VERSION" >&2; exit 1; }
+  version="$(tr -d ' \r\n' < "$root/dist/VERSION")"
   cache="${SP_STATE_DIR:-$HOME/.claude/state}/sp-cli/bin/$version"
   bin="$cache/sp-cli-$target"
   if [ ! -f "$bin" ]; then

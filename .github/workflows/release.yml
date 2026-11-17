@@ -69,6 +69,7 @@ jobs:
           cp artifacts/sp-cli-macos-x64/sp-cli "$d/sp-cli-macos-x64"
           chmod +x "$d/sp-cli-macos-arm64" "$d/sp-cli-macos-x64" plugins/super-productivity/bin/sp-cli
           (cd "$d" && sha256sum sp-cli-* > SHA256SUMS)
+          echo "${TAG#v}" > "$d/VERSION"
           f=plugins/super-productivity/.claude-plugin/plugin.json
           v="${TAG#v}"
           sed -i -E "s/(\"version\": *\")[^\"]*(\")/\1${v}\2/" "$f"
