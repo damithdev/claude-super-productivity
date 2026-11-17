@@ -1,0 +1,10 @@
+{
+  "name": "super-productivity",
+  "version": "0.1.2",
+  "description": "Use Super Productivity as the one todo list. Ships the sp-cli binary, a Stop hook that checks handoff tasks, and skills for todos, handoffs and first-run setup.",
+  "author": {
+    "name": "damithdev"
+  },
+  "homepage": "https://github.com/damithdev/claude-super-productivity",
+  "license": "MIT"
+}

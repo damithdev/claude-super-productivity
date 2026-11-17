@@ -1,0 +1,18 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "claude-super-productivity",
+  "owner": {
+    "name": "damithdev",
+    "url": "https://github.com/damithdev"
+  },
+  "metadata": {
+    "description": "Super Productivity as the one todo list for Claude Code. Ships the sp-cli binary, a handoff check hook and skills."
+  },
+  "plugins": [
+    {
+      "name": "super-productivity",
+      "source": "./plugins/super-productivity",
+      "description": "sp-cli (Super Productivity CLI), session hooks, and skills for todos and handoff tasks. No Rust toolchain needed."
+    }
+  ]
+}

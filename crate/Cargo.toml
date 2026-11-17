@@ -1,0 +1,28 @@
+[package]
+name = "sp-cli"
+description = "Super Productivity CLI over its local REST API, plus a handoff Stop hook"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[lib]
+name = "sp_cli"
+
+[[bin]]
+name = "sp-cli"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+fancy-regex = "0.14"
+ureq = { version = "2", default-features = false, features = ["tls"] }
+
+[dev-dependencies]
+tempfile = "3"
+
+[workspace]
+
+[profile.release]
+strip = true
