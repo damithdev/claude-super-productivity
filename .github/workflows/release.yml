@@ -68,6 +68,7 @@ jobs:
           cp artifacts/sp-cli-macos-arm64/sp-cli "$d/sp-cli-macos-arm64"
           cp artifacts/sp-cli-macos-x64/sp-cli "$d/sp-cli-macos-x64"
           chmod +x "$d/sp-cli-macos-arm64" "$d/sp-cli-macos-x64" plugins/super-productivity/bin/sp-cli
+          (cd "$d" && sha256sum sp-cli-* > SHA256SUMS)
           f=plugins/super-productivity/.claude-plugin/plugin.json
           v="${TAG#v}"
           sed -i -E "s/(\"version\": *\")[^\"]*(\")/\1${v}\2/" "$f"
@@ -81,3 +82,7 @@ jobs:
           git commit -m "Release ${{ github.ref_name }}"
           git pull --rebase origin main
           git push origin HEAD:main
+      - name: Publish release binaries
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" plugins/super-productivity/dist/* --title "${{ github.ref_name }}" --notes "sp-cli binaries and SHA256SUMS."
